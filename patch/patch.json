@@ -1,0 +1,8 @@
+{
+    "name": "Add more numbers to emergency list",
+    "description": "Add more numbers to emergency list",
+    "category": "homescreen",
+    "infos": {
+        "maintainer": "coderus"
+    }
+}

@@ -1,0 +1,302 @@
+commit 3535d8759a74d8050223f3184a938e34d36f6ae1
+Author: CODeRUS <coderusinbox@gmail.com>
+Date:   Tue Dec 16 17:50:08 2014 +0500
+
+    First test for U9 3x3 maze lock
+    MazeLock interactive support
+
+diff --git a/usr/share/lipstick-jolla-home-qt5/main.qml b/usr/share/lipstick-jolla-home-qt5/main.qml
+index 47be504..e996d78 100644
+--- a/usr/share/lipstick-jolla-home-qt5/main.qml
++++ b/usr/share/lipstick-jolla-home-qt5/main.qml
+@@ -273,7 +273,7 @@ ApplicationWindow {
+             maximumFlickVelocity: 4000*Theme.pixelRatio
+             highlightMoveDuration: 300
+             pressDelay: 0
+-            interactive: !closeApplicationEnabled && !removeApplicationEnabled && !launcher.openedChildFolder && !desktop.animating
++            interactive: !closeApplicationEnabled && !removeApplicationEnabled && !launcher.openedChildFolder && !desktop.animating && !deviceLockUI.busy
+             quickScroll: false
+ 
+             onMovingChanged: {
+diff --git a/usr/share/lipstick-jolla-home-qt5/main/DeviceLock.qml b/usr/share/lipstick-jolla-home-qt5/main/DeviceLock.qml
+index c4016cd..a494009 100644
+--- a/usr/share/lipstick-jolla-home-qt5/main/DeviceLock.qml
++++ b/usr/share/lipstick-jolla-home-qt5/main/DeviceLock.qml
+@@ -38,8 +38,10 @@ Item {
+         pininput.enteredPin=""
+     }
+ 
++    property bool busy: pininput.busy
+     DeviceLockInput {
+         id: pininput
++        attempt: attemptCount.value
+         //: Devicelock UI's header-text which indicates Locked state.
+         //% "Locked"
+         titleText: qsTrId("lipstick-jolla-home-he-devicelock_locked")
+diff --git a/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml b/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml
+index 88979b5..4ead410 100644
+--- a/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml
++++ b/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml
+@@ -7,8 +7,24 @@ import org.nemomobile.voicecall 1.0
+ Item {
+     id: root
+ 
++    // new properties
++    property bool busy: pinArea.pressed //should be used by lipstick, disable dashboard interactive when busy
++    property bool useMaze: true
++    property bool captcha: false
++    property int attempt //should be set by DeviceLock.qml to attemptCount.value
++    onAttemptChanged: {
++        if (attempt > 2 && parseInt(attempt % 3) == 0) {
++            captcha = true
++        }
++    }
++
+     // read-only
+     property string enteredPin
++    onEnteredPinChanged: {
++        if (mazeLock.visible) {
++            mazeLock.repaint()
++        }
++    }
+     property bool emergency
+     property bool enteringNewPin
+ 
+@@ -116,7 +132,27 @@ Item {
+                 }
+             }
+         } else {
+-            pinConfirmed()
++            if (captcha) {
++                if (useMaze) {
++                    if (enteredPin == "1478963" || enteredPin == "3698741") {
++                        captcha = false
++                    }
++                }
++                else {
++                    if (enteredPin == "13795") {
++                        captcha = false
++                    }
++                }
++                
++                if (captcha && _feedbackEffect) {
++                    _feedbackEffect.play()
++                }
++                enteredPin = ""
++                _displayedPin = ""
++            }
++            else {
++                pinConfirmed()   
++            }
+         }
+     }
+ 
+@@ -240,7 +276,8 @@ Item {
+         color: root.warningTextColor
+ 
+         font.pixelSize: Theme.fontSizeSmall
+-        text: root._overridingWarningText !== "" ? root._overridingWarningText : root.warningText
++        text: root.captcha ? (useMaze ? "Draw full \"U\" to continue" : "Enter \"13795\" to continue")
++        				   : root._overridingWarningText !== "" ? root._overridingWarningText : root.warningText
+     }
+ 
+     BackgroundItem {
+@@ -354,6 +391,198 @@ Item {
+         Behavior on opacity { FadeAnimation {} }
+ 
+         onPressed: root._pushPinDigit(number + "")
++        visible: emergency || !useMaze
++    }
++
++    Item {
++        id: mazeLock
++        width: parent.width
++        height: width
++        visible: !emergency && useMaze
++        anchors {
++            bottom: parent.bottom
++            bottomMargin: Theme.paddingLarge
++        }
++
++        property int pinx: 3
++        property int piny: 3
++
++        property var colors: ["#FFFFFF", "#FFFF80", "#FFFF00", "#FF80FF",
++                              "#FF8080", "#FF8000", "#FF00FF", "#FF0080",
++                              "#FF0000", "#80FFFF", "#80FF80", "#80FF00",
++                              "#8080FF", "#808080", "#808000", "#8000FF",
++                              "#800080", "#800000", "#00FFFF", "#00FF80",
++                              "#00FF00", "#0080FF", "#008080", "#008000",
++                              "#0000FF", "#000080", "#000000"]
++        property string chars: "#123456789"
++        //123
++        //456
++        //789
++
++        function repaint() {
++            canvas.requestPaint()
++        }
++
++        MouseArea {
++            id: pinArea
++            width: parent.width
++            height: width
++            anchors.centerIn: parent
++
++            Component.onCompleted: {
++                var index = 1
++                for (var jy = 0; jy < mazeLock.piny; jy++) {
++                    for (var jx = 0; jx < mazeLock.pinx; jx++) {
++                        var point = getNodePoint(jx + 1, jy + 1)
++                        var node = pinComponent.createObject(pinArea, {"posX": point.x,
++                                                                       "posY": point.y,
++                                                                       "index": index})
++                        index ++
++                    }
++                }
++            }
++
++            Canvas {
++                id: canvas
++                anchors.fill: parent
++                z: 0
++
++                onPaint: {
++                    var ctx = getContext("2d")
++                    ctx.clearRect(0, 0, width, height)
++                    ctx.lineWidth = 4
++                    ctx.beginPath()
++                    if (root.enteredPin.length > 1) {
++                        for (var i = 0; i < root.enteredPin.length; i++) {
++                            var node = pinArea.getNode(mazeLock.chars.indexOf(root.enteredPin[i]))
++                            var point = pinArea.getNodePoint(node.x, node.y)
++                            console.log("node.x: " + node.x + " node.y: " + node.y
++                                      + " pt.x: " + point.x + " pt.y: " + point.y)
++
++                            if (i == 0) {
++                                ctx.moveTo(point.x, point.y)
++                            }
++                            else {
++                                ctx.strokeStyle = Theme.rgba(mazeLock.colors[i], 0.5)
++                                ctx.lineTo(point.x, point.y)
++                                ctx.stroke()
++                                ctx.beginPath()
++                                ctx.moveTo(point.x, point.y)
++                            }
++                        }
++                    }
++                }
++            }
++
++            signal activatePosition(int ax, int ay)
++
++            function getNode(index) {
++                var nodeX = parseInt(index % mazeLock.pinx) || mazeLock.pinx
++                var nodeY = parseInt((index - 1) / mazeLock.piny) + 1
++                return Qt.point(nodeX, nodeY)
++            }
++
++            function getNodePoint(px, py) {
++                var posX = pinArea.width / (mazeLock.pinx + 1) * px
++                var posY = pinArea.height / (mazeLock.piny + 1) * py
++                return Qt.point(posX, posY)
++            }
++
++            function processItem(index, nodeX, nodeY) {
++                if (root.enteredPin.length < 2) {
++                    addNode(index, nodeX, nodeY)
++                }
++                else {
++                    addNode(index, nodeX, nodeY)
++                }
++            }
++
++            function addNode(index, nodeX, nodeY) {
++                var nodeChar = mazeLock.chars.charAt(index)
++                if (nodeChar != enteredPin.charAt(enteredPin.length - 1)) {
++                    root._pushPinDigit(nodeChar)
++                    canvas.requestPaint()
++                }
++            }
++
++            function removeNode() {
++                root._popPinDigit()
++                canvas.requestPaint()
++            }
++
++            function cleanNodes() {
++                while (root.enteredPin.length > 0) {
++                    root._popPinDigit()
++                }
++                canvas.requestPaint()
++            }
++
++            onPressed: {
++                cleanNodes()
++            }
++
++            onPressAndHold: {
++                if (root.enteredPin.length == 0) { 
++                    useMaze = false
++                }
++            }
++
++            onPositionChanged: {
++                activatePosition(mouse.x, mouse.y)
++            }
++
++            onReleased: {
++                activatePosition(-1, -1)
++                if (root.enteredPin.length > 4) { 
++                    root._clickedConfirmButton()
++                }
++            }
++        }
++
++        Component {
++            id: pinComponent
++            GlassItem {
++                id: nodeItem
++                property bool active: false
++                property int activeSize: 64
++                width: active ? 256 : 64
++                height: active ? 256 : 64
++                property int index: -1
++                property int posX: 0
++                property int posY: 0
++                x: posX - width / 2
++                y: posY - height / 2
++                property int thresold: 8
++                z: 10
++
++                Connections {
++                    target: pinArea
++                    onActivatePosition: {
++                        if (!active && ax >= posX - (activeSize / 2) + thresold
++                                && ay >= posY - (activeSize / 2) + thresold
++                                && ax <= posX + (activeSize / 2) - thresold
++                                && ay <= posY + (activeSize / 2) - thresold) {
++
++                            pinArea.processItem(nodeItem.index, posX, posY)
++                            active = true
++                        }
++                        else if (active && (ax < posX - (activeSize / 2)
++                                     || ay < posY - (activeSize / 2)
++                                     || ax > posX + (activeSize / 2)
++                                     || ay > posY + (activeSize / 2))) {
++                            active = false
++                        }
++                    }
++                }
++
++                Timer {
++                    id: changeAction
++                    interval: 50
++                    onTriggered: {
++                    }
++                }
++            }
++        }
+     }
+ 
+     PinInputOptionButton {
