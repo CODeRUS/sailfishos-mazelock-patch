@@ -1,6 +1,6 @@
 {
-    "name": "Add more numbers to emergency list",
-    "description": "Add more numbers to emergency list",
+    "name": "Adding Maze Lock to devicelock UI",
+    "description": "Adding Maze Lock to devicelock UI",
     "category": "homescreen",
     "infos": {
         "maintainer": "coderus"

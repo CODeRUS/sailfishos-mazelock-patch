@@ -11,7 +11,7 @@ BuildArch: noarch
 
 Summary:    MazeLock patch for Devicelock
 Version:    0.0.1
-Release:    1
+Release:    2
 Group:      Qt/Qt
 License:    TODO
 Source0:    %{name}-%{version}.tar.bz2
