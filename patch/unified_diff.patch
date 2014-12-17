@@ -43,7 +43,7 @@ index 88979b5..4ead410 100644
  
 +    // new properties
 +    property bool busy: pinArea.pressed //should be used by lipstick, disable dashboard interactive when busy
-+    property bool useMaze: true
++    property bool useMaze: !root.hasOwnProperty("simManager")
 +    property bool captcha: false
 +    property int attempt //should be set by DeviceLock.qml to attemptCount.value
 +    onAttemptChanged: {
