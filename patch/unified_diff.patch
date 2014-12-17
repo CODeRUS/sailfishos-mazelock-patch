@@ -1,9 +1,8 @@
-commit 3535d8759a74d8050223f3184a938e34d36f6ae1
+commit c5188279ed697672ae38e52d9dbd9c61f4bf9e15
 Author: CODeRUS <coderusinbox@gmail.com>
-Date:   Tue Dec 16 17:50:08 2014 +0500
+Date:   Wed Dec 17 17:49:40 2014 +0500
 
-    First test for U9 3x3 maze lock
-    MazeLock interactive support
+    MazeLock 0.0.3
 
 diff --git a/usr/share/lipstick-jolla-home-qt5/main.qml b/usr/share/lipstick-jolla-home-qt5/main.qml
 index 47be504..e996d78 100644
@@ -34,10 +33,15 @@ index c4016cd..a494009 100644
          //% "Locked"
          titleText: qsTrId("lipstick-jolla-home-he-devicelock_locked")
 diff --git a/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml b/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml
-index 88979b5..4ead410 100644
+index 88979b5..2e6f34f 100644
 --- a/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml
 +++ b/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml
-@@ -7,8 +7,24 @@ import org.nemomobile.voicecall 1.0
+@@ -3,12 +3,29 @@ import Sailfish.Silica 1.0
+ import MeeGo.QOfono 0.2
+ import org.nemomobile.lipstick 0.1
+ import org.nemomobile.voicecall 1.0
++import org.nemomobile.configuration 1.0
+ 
  Item {
      id: root
  
@@ -62,7 +66,7 @@ index 88979b5..4ead410 100644
      property bool emergency
      property bool enteringNewPin
  
-@@ -116,7 +132,27 @@ Item {
+@@ -116,7 +133,27 @@ Item {
                  }
              }
          } else {
@@ -91,7 +95,16 @@ index 88979b5..4ead410 100644
          }
      }
  
-@@ -240,7 +276,8 @@ Item {
+@@ -134,7 +171,7 @@ Item {
+                 return
+             }
+             obfuscateLastDigit.stop()
+-            _displayedPin = _passwordString(_displayedPin.length) + digit
++            _displayedPin = _passwordString(_displayedPin.length) + (useMaze && mazeLockSettings.maskImmediately ? _passwordCharacter : digit)
+             enteredPin += digit
+             obfuscateLastDigit.start()
+             if (minimumLength > enteredPin.length) {
+@@ -240,7 +277,8 @@ Item {
          color: root.warningTextColor
  
          font.pixelSize: Theme.fontSizeSmall
@@ -101,11 +114,29 @@ index 88979b5..4ead410 100644
      }
  
      BackgroundItem {
-@@ -354,6 +391,198 @@ Item {
+@@ -299,7 +337,7 @@ Item {
+         }
+         icon.source: "image://theme/icon-m-backspace" + (root.dimmerBackspace && !root.emergency ? "?" + Theme.highlightDimmerColor : "")
+ 
+-        opacity: root.enteredPin === "" ? 0 : 1
++        opacity: useMaze || root.enteredPin === "" ? 0 : 1
+ 
+         Behavior on opacity { FadeAnimation {} }
+ 
+@@ -354,6 +392,197 @@ Item {
          Behavior on opacity { FadeAnimation {} }
  
          onPressed: root._pushPinDigit(number + "")
 +        visible: emergency || !useMaze
++    }
++
++    ConfigurationGroup {
++        id: mazeLockSettings
++        path: "/desktop/nemo/devicelock/mazelock"
++// Will be enabled in u10
++//        property int size: 4
++        property bool colored: true
++        property bool maskImmediately: false
 +    }
 +
 +    Item {
@@ -113,10 +144,7 @@ index 88979b5..4ead410 100644
 +        width: parent.width
 +        height: width
 +        visible: !emergency && useMaze
-+        anchors {
-+            bottom: parent.bottom
-+            bottomMargin: Theme.paddingLarge
-+        }
++        anchors.bottom: parent.bottom
 +
 +        property int pinx: 3
 +        property int piny: 3
@@ -177,7 +205,7 @@ index 88979b5..4ead410 100644
 +                                ctx.moveTo(point.x, point.y)
 +                            }
 +                            else {
-+                                ctx.strokeStyle = Theme.rgba(mazeLock.colors[i], 0.5)
++                                ctx.strokeStyle = Theme.rgba(mazeLockSettings.colored ? mazeLock.colors[i] : Theme.primaryColor, 0.5)
 +                                ctx.lineTo(point.x, point.y)
 +                                ctx.stroke()
 +                                ctx.beginPath()
@@ -258,7 +286,7 @@ index 88979b5..4ead410 100644
 +            GlassItem {
 +                id: nodeItem
 +                property bool active: false
-+                property int activeSize: 64
++                property int activeSize: pinArea.width / (mazeLock.pinx + 1) * 2 / 3
 +                width: active ? 256 : 64
 +                height: active ? 256 : 64
 +                property int index: -1
@@ -288,15 +316,17 @@ index 88979b5..4ead410 100644
 +                        }
 +                    }
 +                }
-+
-+                Timer {
-+                    id: changeAction
-+                    interval: 50
-+                    onTriggered: {
-+                    }
-+                }
 +            }
 +        }
      }
  
      PinInputOptionButton {
+@@ -398,7 +627,7 @@ Item {
+                 //: Starts the phone call
+                 //% "Call"
+               ? qsTrId("settings_pin-bt-start_call")
+-              : (root.enteredPin.length < minimumLength || !root._changedPinValid() ? "" : root.okText)
++              : (useMaze || root.enteredPin.length < minimumLength || !root._changedPinValid() ? "" : root.okText)
+         showWhiteBackgroundByDefault: root.emergency
+ 
+         onClicked: {
