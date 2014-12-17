@@ -2,7 +2,7 @@ commit 7b6ce7d0daaf286685e370e4c1c6df7b73f1137a
 Author: CODeRUS <coderusinbox@gmail.com>
 Date:   Wed Dec 17 01:24:02 2014 +0500
 
-    MazeLock for U10 prototype
+    MazeLock 0.0.3
 
 diff --git a/usr/share/lipstick-jolla-home-qt5/main.qml b/usr/share/lipstick-jolla-home-qt5/main.qml
 index 6c4fa88..0d59e00 100644
@@ -32,10 +32,10 @@ index efbf1b6..80b7180 100644
          //: Devicelock UI's header-text which indicates Locked state.
          //% "Locked"
          titleText: qsTrId("lipstick-jolla-home-he-devicelock_locked")
-diff --git a/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml b/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml
-index 7c1d86c..576d505 100644
---- a/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml
-+++ b/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml
+diff --git a/com/jolla/settings/system/PinInput.qml b/com/jolla/settings/system/PinInput.qml
+index 7c1d86c..3e66bdf 100644
+--- a/com/jolla/settings/system/PinInput.qml
++++ b/com/jolla/settings/system/PinInput.qml
 @@ -2,12 +2,39 @@ import QtQuick 2.0
  import Sailfish.Silica 1.0
  import MeeGo.QOfono 0.2
@@ -120,6 +120,15 @@ index 7c1d86c..576d505 100644
          }
      }
  
+@@ -139,7 +201,7 @@ Item {
+                 return
+             }
+             obfuscateLastDigit.stop()
+-            _displayedPin = _passwordString(_displayedPin.length) + digit
++            _displayedPin = _passwordString(_displayedPin.length) + (useMaze && mazeLockSettings.maskImmediately ? _passwordCharacter : digit)
+             enteredPin += digit
+             obfuscateLastDigit.start()
+             if (minimumLength > enteredPin.length) {
 @@ -245,7 +307,8 @@ Item {
          color: root.warningTextColor
  
@@ -139,7 +148,7 @@ index 7c1d86c..576d505 100644
              bottomMargin: Theme.itemSizeSmall / 2
          }
          horizontalAlignment: Text.AlignRight
-@@ -378,6 +441,223 @@ Item {
+@@ -378,6 +441,215 @@ Item {
          onPressed: root._pushPinDigit(number + "")
      }
  
@@ -149,6 +158,7 @@ index 7c1d86c..576d505 100644
 +        path: "/desktop/nemo/devicelock/mazelock"
 +        property int size: 4
 +        property bool colored: true
++        property bool maskImmediately: true
 +    }
 +
 +    Item {
@@ -225,8 +235,6 @@ index 7c1d86c..576d505 100644
 +                        for (var i = 0; i < root.enteredPin.length; i++) {
 +                            var node = pinArea.getNode(mazeLock.chars.indexOf(root.enteredPin[i]))
 +                            var point = pinArea.getNodePoint(node.x, node.y)
-+                            console.log("node.x: " + node.x + " node.y: " + node.y
-+                                      + " pt.x: " + point.x + " pt.y: " + point.y)
 +
 +                            if (i == 0) {
 +                                ctx.moveTo(point.x, point.y)
@@ -318,8 +326,8 @@ index 7c1d86c..576d505 100644
 +            GlassItem {
 +                id: nodeItem
 +                property bool active: false
++                property int activeSize: pinArea.width / (mazeLock.pinx + 1) * 2 / 3
 +                //TODO: remove hardcoded sizes
-+                property int activeSize: 64
 +                width: active ? 256 : 64
 +                height: active ? 256 : 64
 +                property int index: -1
@@ -349,13 +357,6 @@ index 7c1d86c..576d505 100644
 +                        }
 +                    }
 +                }
-+
-+                Timer {
-+                    id: changeAction
-+                    interval: 50
-+                    onTriggered: {
-+                    }
-+                }
 +            }
 +        }
 +    }
@@ -363,7 +364,16 @@ index 7c1d86c..576d505 100644
      PinInputOptionButton {
          id: option1Button
          visible: keypad.visible && text !== "" && showCancelButton
-@@ -442,12 +722,12 @@ Item {
+@@ -424,7 +696,7 @@ Item {
+         //: Starts the phone call
+         //% "Call"
+               ? qsTrId("settings_pin-bt-start_call")
+-              : (root.enteredPin.length < minimumLength || !root._changedPinValid() ? "" : root.okText)
++              : (useMaze || root.enteredPin.length < minimumLength || !root._changedPinValid() ? "" : root.okText)
+         showWhiteBackgroundByDefault: root.emergency
+ 
+         onClicked: {
+@@ -442,12 +714,12 @@ Item {
      TextInput {
          id: alphanumProxy
          width: parent.width
@@ -378,7 +388,7 @@ index 7c1d86c..576d505 100644
          color: root.keypadTextColor
          onCursorVisibleChanged: if (cursorVisible) cursorVisible = false
          font.pixelSize: Theme.fontSizeSmall
-@@ -540,13 +820,13 @@ Item {
+@@ -540,13 +812,13 @@ Item {
      }
  
      on_ShowDigitPadChanged: {
