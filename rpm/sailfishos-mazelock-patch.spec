@@ -10,7 +10,7 @@ BuildArch: noarch
 # << macros
 
 Summary:    MazeLock patch for Devicelock
-Version:    0.0.3
+Version:    0.0.11
 Release:    1
 Group:      Qt/Qt
 License:    TODO
@@ -43,13 +43,33 @@ rm -rf %{buildroot}
 # >> install pre
 mkdir -p %{buildroot}/usr/share/patchmanager/patches/sailfishos-mazelock-patch
 cp -r patch/* %{buildroot}/usr/share/patchmanager/patches/sailfishos-mazelock-patch
+mkdir -p %{buildroot}/usr/share/jolla-settings/pages/sailfishos-mazelock-patch
+cp -r settings/*.qml %{buildroot}/usr/share/jolla-settings/pages/sailfishos-mazelock-patch
+mkdir -p %{buildroot}/usr/share/jolla-settings/entries
+cp -r settings/*.json %{buildroot}/usr/share/jolla-settings/entries/
 # << install pre
 
 # >> install post
 # << install post
 
+%pre
+# >> pre
+if [ -f /usr/sbin/patchmanager ]; then
+/usr/sbin/patchmanager -u sailfishos-mazelock-patch || true
+fi
+# << pre
+
+%preun
+# >> preun
+if [ -f /usr/sbin/patchmanager ]; then
+/usr/sbin/patchmanager -u sailfishos-mazelock-patch || true
+fi
+# << preun
+
 %files
 %defattr(-,root,root,-)
 %{_datadir}/patchmanager/patches/sailfishos-mazelock-patch
+%{_datadir}/jolla-settings/entries
+%{_datadir}/jolla-settings/pages
 # >> files
 # << files
