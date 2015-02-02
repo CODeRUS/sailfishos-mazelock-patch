@@ -13,31 +13,23 @@ index 6c4fa88..0d59e00 100644
              highlightMoveDuration: 300
              pressDelay: 0
 -            interactive: !closeApplicationEnabled && !removeApplicationEnabled && !launcher.openedChildFolder && !desktop.animating
-+            interactive: !closeApplicationEnabled && !removeApplicationEnabled && !launcher.openedChildFolder && !desktop.animating && !deviceLockUI.busy
++            interactive: !closeApplicationEnabled && !removeApplicationEnabled && !launcher.openedChildFolder && !desktop.animating && !(deviceLockUI.item && deviceLockUI.item.busy)
              quickScroll: false
  
              onMovingChanged: {
-diff --git a/usr/share/lipstick-jolla-home-qt5/main/DeviceLock.qml b/usr/share/lipstick-jolla-home-qt5/main/DeviceLock.qml
-index efbf1b6..80b7180 100644
---- a/usr/share/lipstick-jolla-home-qt5/main/DeviceLock.qml
-+++ b/usr/share/lipstick-jolla-home-qt5/main/DeviceLock.qml
-@@ -14,6 +14,7 @@ import org.nemomobile.ngf 1.0
- Item {
-     property bool peekAllowed: deviceLock.state != 1 || lockSettings.peekingAllowed === "1"
-     property bool areaVisible
-+    property bool busy: pininput.busy
+diff --git a/usr/share/lipstick-jolla-home-qt5/main/DeviceLockView.qml b/usr/share/lipstick-jolla-home-qt5/main/DeviceLockView.qml
+index 4593c79..ab7ef3e 100644
+--- a/usr/share/lipstick-jolla-home-qt5/main/DeviceLockView.qml
++++ b/usr/share/lipstick-jolla-home-qt5/main/DeviceLockView.qml
+@@ -13,6 +13,8 @@ import org.nemomobile.ngf 1.0
  
-     DeviceLockSettings {
-         id: lockSettings
-@@ -41,6 +42,8 @@ Item {
+ DeviceLockInput {
+     id: pininput
++    property int attempt: attemptCount.value
++    property bool busy: false
  
-     DeviceLockInput {
-         id: pininput
-+        property int attempt: attemptCount.value
-+        property bool busy: false
-         //: Devicelock UI's header-text which indicates Locked state.
-         //% "Locked"
-         titleText: qsTrId("lipstick-jolla-home-he-devicelock_locked")
+     function reset() {
+         pininput._displayedPin=""
 diff --git a/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml b/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml
 index 7c1d86c..3e66bdf 100644
 --- a/usr/lib/qt5/qml/com/jolla/settings/system/PinInput.qml

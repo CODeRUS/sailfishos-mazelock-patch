@@ -16,8 +16,8 @@ Group:      Qt/Qt
 License:    TODO
 Source0:    %{name}-%{version}.tar.bz2
 Requires:   patchmanager
-Requires:   sailfish-version >= 1.1.1
-Requires:   lipstick-jolla-home-qt5 >= 0.23.20.9
+Requires:   sailfish-version >= 1.1.2
+Requires:   lipstick-jolla-home-qt5 >= 0.24.23.1
 
 %description
 MazeLock patch for Devicelock
