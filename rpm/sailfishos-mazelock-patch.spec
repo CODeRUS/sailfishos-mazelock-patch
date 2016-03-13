@@ -3,7 +3,7 @@ Name:       sailfishos-mazelock-patch
 BuildArch: noarch
 
 Summary:    MazeLock patch for Devicelock
-Version:    0.1.0
+Version:    0.1.3
 Release:    1
 Group:      Qt/Qt
 License:    WTFPL

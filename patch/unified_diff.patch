@@ -2,7 +2,7 @@ diff --git a/DeviceLockInput.qml b/DeviceLockInput.qml
 index 61dd545..2d3ea67 100644
 --- a/usr/lib/qt5/qml/com/jolla/settings/system/DeviceLockInput.qml
 +++ b/usr/lib/qt5/qml/com/jolla/settings/system/DeviceLockInput.qml
-@@ -1,14 +1,850 @@
+@@ -1,14 +1,861 @@
  import QtQuick 2.0
  import Sailfish.Silica 1.0
 +import MeeGo.QOfono 0.2
@@ -47,11 +47,7 @@ index 61dd545..2d3ea67 100644
 +
 +    // read-only
 +    property string enteredPin
-+    onEnteredPinChanged: {
-+        if (mazeLock.visible) {
-+            mazeLock.repaint()
-+        }
-+    }
++    onEnteredPinChanged: mazeLock.repaint()
 +    property bool emergency
 +    property bool enteringNewPin
 +
@@ -543,7 +539,7 @@ index 61dd545..2d3ea67 100644
 +                    ctx.clearRect(0, 0, width, height)
 +                    ctx.lineWidth = 4
 +                    ctx.beginPath()
-+                    if (root.enteredPin.length > 1) {
++                    if (root.enteredPin.length > 0) {
 +                        for (var i = 0; i < root.enteredPin.length; i++) {
 +                            var node = pinArea.getNode(mazeLock.chars.indexOf(root.enteredPin[i]))
 +                            var point = pinArea.getNodePoint(node.x, node.y)
@@ -559,11 +555,18 @@ index 61dd545..2d3ea67 100644
 +                                ctx.moveTo(point.x, point.y)
 +                            }
 +                        }
++                        if (pinArea.pressed && pinArea.lastx > 0 && pinArea.lasty > 0) {
++                            ctx.strokeStyle = Theme.rgba(mazeLockSettings.colored ? mazeLock.colors[i] : Theme.primaryColor, 0.5)
++                            ctx.lineTo(pinArea.lastx, pinArea.lasty)
++                            ctx.stroke()
++                        }
 +                    }
 +                }
 +            }
 +
 +            signal activatePosition(int ax, int ay)
++            property int lastx: -1
++            property int lasty: -1
 +
 +            function getNode(index) {
 +                var nodeX = parseInt(index % mazeLock.pinx) || mazeLock.pinx
@@ -618,10 +621,18 @@ index 61dd545..2d3ea67 100644
 +
 +            onPositionChanged: {
 +                activatePosition(mouse.x, mouse.y)
++                lastx = mouse.x
++                lasty = mouse.y
++                if (mazeLock.visible) {
++                    mazeLock.repaint()
++                }
 +            }
 +
 +            onReleased: {
 +                activatePosition(-1, -1)
++                if (mazeLock.visible) {
++                    mazeLock.repaint()
++                }
 +                if (captcha) {
 +                    if (root.enteredPin.length >= mazeLock.pinx) {
 +                        root._clickedConfirmButton()
