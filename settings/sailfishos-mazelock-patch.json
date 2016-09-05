@@ -6,7 +6,7 @@
             "type": "page",
             "title": "MazeLock settings",
             "translation_id": "MazeLock settings",
-            "icon": "/usr/share/jolla-settings/pages/sailfishos-mazelock-patch/icon-m-patchmanager-mazelock.png",
+            "icon": "image://theme/icon-m-patchmanager-mazelock",
             "order": 5000,
             "params": {
                 "source": "/usr/share/jolla-settings/pages/sailfishos-mazelock-patch/main.qml"
