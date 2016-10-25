@@ -475,11 +475,10 @@ Item {
     Item {
         id: mazeLock
         visible: !emergency && useMaze
-        anchors.centerIn: keypad
-        anchors.verticalCenterOffset: -width / pinx / 2
-        anchors.horizontalCenterOffset: -height / piny / 2
-        width: keypad.width
-        height: keypad.height
+        anchors.top: keypad.top
+        anchors.horizontalCenter: keypad.horizontalCenter
+        width: Math.min(keypad.width, keypad.height)
+        height: width
 
         property int pinx: 3//showDigitPad ? 3 : (mazeLockSettings.size <= 3 ? 3 : (mazeLockSettings.size >= 6 ? 6 : mazeLockSettings.size))
         property int piny: 3//pinx
@@ -520,9 +519,7 @@ Item {
 
         MouseArea {
             id: pinArea
-            width: Math.min(parent.width, parent.height)
-            height: width
-            anchors.centerIn: parent
+            anchors.fill: parent
             preventStealing: true
 
             Repeater {
@@ -578,8 +575,8 @@ Item {
             }
 
             function getNodePoint(px, py) {
-                var posX = pinArea.width / (mazeLock.pinx) * px
-                var posY = pinArea.height / (mazeLock.piny) * py
+                var posX = pinArea.width / (mazeLock.pinx + 1) * px
+                var posY = pinArea.height / (mazeLock.piny + 1) * py
                 return Qt.point(posX, posY)
             }
 
