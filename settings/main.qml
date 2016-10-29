@@ -23,26 +23,27 @@ Page {
             spacing: Theme.paddingLarge
 
             PageHeader {
-                title: "MazeLock settings"
+				//% "MazeLock settings"
+                title: qsTrId("MazeLock settings")
             }
 
             TextSwitch {
                 width: parent.width
-                text: "Mask input character immediately"
+                text: qsTr("Mask input character immediately")
                 checked: mazeLockSettings.maskImmediately
                 onClicked: mazeLockSettings.maskImmediately = checked
             }
 
             TextSwitch {
                 width: parent.width
-                text: "Draw colored lines between nodes"
+                text: qsTr("Draw colored lines between nodes")
                 checked: mazeLockSettings.colored
                 onClicked: mazeLockSettings.colored = checked
             }
 
             Slider {
                 width: parent.width
-                label: "MazeLock size"
+                label: qsTr("MazeLock size")
                 maximumValue: 6
                 minimumValue: 3
                 stepSize: 1

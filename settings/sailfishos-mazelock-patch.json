@@ -5,8 +5,8 @@
             "path": "system_settings/look_and_feel/sailfishos-mazelock-patch",
             "type": "page",
             "title": "MazeLock settings",
-            "translation_id": "sailfishos-mazelock-patch-title",
-            "icon": "/usr/share/jolla-settings/pages/sailfishos-mazelock-patch/icon-m-patchmanager-mazelock.png",
+            "translation_id": "MazeLock settings",
+            "icon": "image://theme/icon-m-patchmanager-mazelock",
             "order": 5000,
             "params": {
                 "source": "/usr/share/jolla-settings/pages/sailfishos-mazelock-patch/main.qml"
